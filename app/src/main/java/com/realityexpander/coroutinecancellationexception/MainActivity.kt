@@ -13,16 +13,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.lifecycleScope
 import com.realityexpander.coroutinecancellationexception.ui.theme.CoroutineCancellationExceptionTheme
 import kotlinx.coroutines.*
+import kotlinx.coroutines.NonCancellable.join
 import java.net.HttpRetryException
 
 // Reference this video: https://www.youtube.com/watch?v=VWlwkqmTLHc
 
 class MainActivity : ComponentActivity() {
+    @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         // Example 1
-        // No try/catch blocks are in local launch scope, so the exception propagates to the top level and crashes.
+        // No try/catch blocks are in local launch scope, so the exception propagates
+        //   to the top level and CRASHES.
         if (false) {
             lifecycleScope.launch {
                 try {
@@ -45,8 +48,8 @@ class MainActivity : ComponentActivity() {
                         try {
                             throw Exception("Exception Example 2")
                         } catch (e: Exception) {
-                            // MUST be caught & handled in local launch scope, or exception
-                            //   will propagate to top level coroutine and crash
+                            // Exception MUST be caught & handled in local launch scope, or exception
+                            //   will propagate to top level coroutine and crash.
                             println("Caught inner Exception: ${e.message}")
                             e.printStackTrace()
                         }
@@ -58,7 +61,7 @@ class MainActivity : ComponentActivity() {
         }
 
         // Example 3 (2 inner coroutines)
-        // Exception propagates up to top level & crashes.
+        // Exception propagates up to top level & CRASHES.
         //   - no local try/catch blocks where exception occurred.
         if (false) {
             lifecycleScope.launch {
@@ -78,8 +81,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Example 3.5 (2 inner coroutines, with try/catch in all scopes EXCEPT local launch scope where exception occurs)
-        // Exception propagates up to top level & crashes.
+        // Example 3.5 (2 inner coroutines, with try/catch in ALL scopes EXCEPT the local launch scope where exception occurs)
+        // Exception propagates up to top level & CRASHES.
         // Even if the containing launch block has a try/catch, the exception STILL propagates
         //   up to the top level coroutine because it was not handled in the launch scope block that caused the exception.
         if (false) {
@@ -89,8 +92,7 @@ class MainActivity : ComponentActivity() {
                         try {
                             launch {
 
-                                // Exception is not handled & propagates up
-                                // & not handled & propagates up to top coroutine
+                                // Exception is NOT handled & propagates up to top coroutine
                                 // & CRASHES here
                                 throw Exception("Exception Example 3.5")
                             }
@@ -131,7 +133,7 @@ class MainActivity : ComponentActivity() {
                 val string = async {
                     delay(500L)
 
-                    // Propagates up to top coroutine and not handled,
+                    // Propagates up to top coroutine and not handled.
                     // Will *NOT* immediately crash because async coroutine is not yet complete.
                     throw Exception("Exception Example 5")
 
@@ -142,7 +144,8 @@ class MainActivity : ComponentActivity() {
                 string
             }
 
-            // NOTICE: No `deferredString.await()` here. The async coroutine never completes, so no crash occurs.
+            // NOTICE: No `deferredString.await()` here.
+            // The async coroutine never completes, so no crash occurs!
         }
 
         // Example 6 inner async coroutine, second coroutine completes the async with an await.
@@ -173,7 +176,8 @@ class MainActivity : ComponentActivity() {
 
         // Example 7 inner async coroutine, with outer async. Exception is thrown in inner async coroutine,
         // Second coroutine completes the Async & exception is handled. No crash.
-        if (true) {
+        // ** WRONG WAY TO HANDLE THIS - DON'T DO THIS **
+        if (false) {
             val deferredString = lifecycleScope.async {
                 val string = async {
                     println("About to get string...")
@@ -192,7 +196,7 @@ class MainActivity : ComponentActivity() {
                 string
             }
 
-            // get the deferred string here, no crash because exception is handled
+            // Complete the deferredString async here, no crash because exception is handled by the try/catch block.
             // ** WRONG WAY TO HANDLE THIS - DON'T DO THIS **
             lifecycleScope.launch {
                 try {
@@ -201,6 +205,71 @@ class MainActivity : ComponentActivity() {
                 } catch (e: Exception) {
                     println("Second coroutine Caught Exception: ${e.message}")
                 }
+            }
+        }
+
+        // Example 7.5 inner async coroutine, with outer async. Exception is thrown in inner async coroutine,
+        // Second coroutine completes the Async & exception is handled by handler.
+        // Uses CoroutineExceptionHandler to handle exception. No crash.
+        // ** RIGHT WAY TO HANDLE THIS - DO THIS **
+        if (false) {
+            // Must install this in root coroutine scope (top-level async or launch)
+            val handler = CoroutineExceptionHandler { _, e ->
+                println("CoroutineExceptionHandler Caught Exception: ${e.message}")
+            }
+
+            val deferredString = lifecycleScope.async {
+                val string = async {
+                    println("About to get string...")
+                    delay(500L)
+
+                    // propagated up to top coroutine and not handled,
+                    // *will* crash here when async coroutine deferredString is .await()'ed.
+                    throw Exception("Exception Example 7.5")
+
+                    "Result"
+                }
+
+                println("About to print string...")
+                println("string: ${string.await()}") // Completes the `string` async coroutine & throws the exception.
+
+                string
+            }
+
+            // Complete the deferredString async here, no crash because exception is handled by the handler.
+            // ** RIGHT WAY TO HANDLE THIS - DO THIS **
+            // USE CoroutineExceptionHandler to handle exception.
+            lifecycleScope.launch(handler) {
+                println("About to print deferredString...")
+                println("deferredString: ${deferredString.await()}")  // Completes the `deferredString` async block & handler catches exception and handles it.
+            }
+        }
+
+        // Example 7.6 simpler example - inner async coroutine, with outer async. Exception is thrown in inner async coroutine,
+        // `string.await()` completes the async & exception is handled by handler.
+        // Uses CoroutineExceptionHandler to handle exception. No crash.
+        // ** RIGHT WAY TO HANDLE THIS - DO THIS **
+        if (true) {
+            // Must install this in root coroutine scope
+            // (top-level <scope>.launch, adding to <scope>.async doesn't work)
+            val handler = CoroutineExceptionHandler { _, e ->
+                println("CoroutineExceptionHandler Caught Exception: ${e.message}")
+            }
+
+            lifecycleScope.launch(handler) {
+                val string = lifecycleScope.async {
+                    println("About to get string...")
+                    delay(500L)
+
+                    // propagated up to top coroutine and not handled,
+                    // *will* crash here when async coroutine deferredString is .await()'ed.
+                    throw Exception("Exception Example 7.6")
+
+                    "Result"
+                }
+
+                println("About to print string...")
+                println("string: ${string.await()}") // Completes the `deferred string async` coroutine & throws the exception.
             }
         }
 
@@ -372,7 +441,7 @@ class MainActivity : ComponentActivity() {
                     } catch (e: Exception) {  // catching *ALL* exceptions (and checking for CancellationException later in catch block)
                         println("Coroutine 1 - Caught Exception: ${e.message}")
 
-                        if(e is CancellationException) {
+                        if (e is CancellationException) {
                             println("Coroutine 1 - rethrowing CancellationException - Example 15 ")
                             throw e // re-throw cancellationException to propagate up to top coroutine
                         }
@@ -407,7 +476,7 @@ class MainActivity : ComponentActivity() {
                     } catch (e: Exception) {  // catching *ALL* exceptions (and checking for CancellationException later in catch block)
                         println("Coroutine 1 - Caught Exception: ${e.message}")
 
-                        if(e is CancellationException) {
+                        if (e is CancellationException) {
                             println("Coroutine 1 - throwing custom exception - Example 16 ")
                             throw Exception("Custom Exception") // re-throw custom exception to propagate up to handler
                         }
