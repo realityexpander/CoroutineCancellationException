@@ -15,6 +15,8 @@ import com.realityexpander.coroutinecancellationexception.ui.theme.CoroutineCanc
 import kotlinx.coroutines.*
 import java.net.HttpRetryException
 
+// Reference this video: https://www.youtube.com/watch?v=VWlwkqmTLHc
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
