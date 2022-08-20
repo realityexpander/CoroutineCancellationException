@@ -21,12 +21,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Example 1 (intentionally crashing, no try/catch blocks)
+        // Example 1
+        // No try/catch blocks are in local launch scope, so the exception propagates to the top level and crashes.
         if (false) {
             lifecycleScope.launch {
                 try {
                     launch {
-                        throw Exception("Exception Example 1") // crashes here (no try/catch in local launch scope)
+                        throw Exception("Exception Example 1") // Propagates to top level & crashes here (no try/catch in local launch scope)
                     }
                 } catch (e: Exception) {
                     println("Caught Exception: ${e.message}")
@@ -34,7 +35,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Example 2 (1 inner coroutine caught and not propagated, using try/catch in local launch scope)
+        // Example 2 (1 inner coroutine)
+        // Exception is caught locally and not propagated, using a try/catch in local launch scope where exception occurs.
         if (false) {
             lifecycleScope.launch {
                 try {
@@ -53,8 +55,9 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Example 3 (2 inner coroutines, exception propagated up to top level & crashes)
-        //   - no local try/catch blocks where exception occurred
+        // Example 3 (2 inner coroutines)
+        // Exception propagates up to top level & crashes.
+        //   - no local try/catch blocks where exception occurred.
         if (false) {
             lifecycleScope.launch {
                 try {
@@ -73,8 +76,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Example 3.5 (2 inner coroutines, with try/catch in all scopes except local launch scope where exception occurred,
-        //   exception propagated up to top level & crashes)
+        // Example 3.5 (2 inner coroutines, with try/catch in all scopes EXCEPT local launch scope where exception occurs)
+        // Exception propagates up to top level & crashes.
         // Even if the containing launch block has a try/catch, the exception STILL propagates
         //   up to the top level coroutine because it was not handled in the launch scope block that caused the exception.
         if (true) {
@@ -101,7 +104,8 @@ class MainActivity : ComponentActivity() {
         }
 
 
-        // Example 4 inner async coroutine, outer launch
+        // Example 4 inner async coroutine, outer launch.
+        // Crashes because the inner async coroutine throws unhandled exception and propagates up to the top and crashes.
         if (false) {
             lifecycleScope.launch {
                 val string = async {
@@ -116,7 +120,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Example 5 inner async coroutine, outer async, outer async never completes
+        // Example 5 inner async coroutine, outer async, outer async never completes.
+        // No crash and inner async never completes because `deferredString.await()` is never called.
         if (false) {
             val deferredString = lifecycleScope.async {
                 val string = async {
@@ -136,7 +141,9 @@ class MainActivity : ComponentActivity() {
             // NOTICE: No `deferredString.await()` here. The async coroutine is not complete, so no crash occurs.
         }
 
-        // Example 6 inner async coroutine, outer async, outer async completes & exception is not handled
+        // Example 6 inner async coroutine, second coroutine completes the async with an await.
+        // Exception is thrown in inner async coroutine.
+        // Second coroutine completes the Async & exception is NOT handled causing crash.
         if (false) {
             val deferredString = lifecycleScope.async {
                 val string = async {
@@ -160,7 +167,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Example 7 inner async coroutine, with outer async. Outer async completes & exception is handled
+        // Example 7 inner async coroutine, with outer async. Exception is thrown in inner async coroutine,
+        // Second coroutine completes the Async & exception is handled. No crash.
         if (false) {
             val deferredString = lifecycleScope.async {
                 val string = async {
@@ -188,7 +196,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Example 8 using CoroutineExceptionHandler. Exception is handled by CoroutineExceptionHandler.
+        // Example 8 using CoroutineExceptionHandler.
+        // Exception is handled by CoroutineExceptionHandler.
         if (false) {
             // Must be installed into the ROOT coroutine
             // NOTE: Does not handle CancellationException
@@ -203,12 +212,13 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Example 9 using CoroutineScopes w/o CoroutineExceptionHandler
+        // Example 9 using CoroutineScopes w/o CoroutineExceptionHandler.
+        // Exceptions are not handled and causes crash.
         if (false) {
             CoroutineScope(Dispatchers.Main).launch {
                 launch {
                     delay(500L)
-                    throw Exception("Coroutine 1 failed - Example 9 ")  // crashes here
+                    throw Exception("Coroutine 1 failed - Example 9 ")  // propagates up & crashes here
                 }
                 launch {
                     delay(600L)  // takes a little longer than "Coroutine 1"
@@ -217,7 +227,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Example 10 using CoroutineScopes w/ CoroutineExceptionHandler
+        // Example 10 using CoroutineScopes w/ CoroutineExceptionHandler.
         if (false) {
             // Must be installed into the ROOT coroutine
             val handler = CoroutineExceptionHandler { _, throwable ->
@@ -240,8 +250,8 @@ class MainActivity : ComponentActivity() {
         }
 
 
-        // Example 11 using CoroutineScopes w/ CoroutineExceptionHandler + supervisorScope
-        //   supervisorScope is used to allow the coroutines in the scope to run EVEN IF ONE OF THE COROUTINES FAILS.
+        // Example 11 using CoroutineScopes w/ CoroutineExceptionHandler + supervisorScope.
+        //   supervisorScope allows all the coroutines in the scope to run EVEN IF ONE/MANY OF THE COROUTINES FAILS.
         if (false) {
             // Must be installed into the ROOT coroutine
             val handler = CoroutineExceptionHandler { _, throwable ->
@@ -264,8 +274,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Example 12 using CoroutineScopes w/ CoroutineExceptionHandler + coroutineScope
-        //   coroutineScope is used to cancel all the coroutines in the scope when ANY COROUTINES IN THE SCOPE FAILS.
+        // Example 12 using CoroutineScopes w/ CoroutineExceptionHandler + coroutineScope.
+        //   coroutineScope will cancel ALL the coroutines in the scope when ANY COROUTINE IN THE SCOPE FAILS.
         if (false) {
             // Must be installed into the ROOT coroutine
             val handler = CoroutineExceptionHandler { _, throwable ->
@@ -288,8 +298,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Example 13 shows WRONG way to handle exceptions in coroutines
-        // - handling ALL exceptions and *not* separating out CancellationException
+        // Example 13 shows WRONG way to handle exceptions in coroutines.
+        // - handling ALL exceptions and *not* separating out CancellationException.
         if (false) {
             lifecycleScope.launch {
                 val job = launch {
@@ -313,9 +323,9 @@ class MainActivity : ComponentActivity() {
 
         }
 
-        // Example 14 shows correct way to handle exceptions in coroutines
+        // Example 14 shows CORRECT way to handle exceptions in coroutines.
         // - OPTION 1: Capture & handle only specific exceptions.
-        // - only handling job-context specific exceptions, allows CancellationException to propagate up to top coroutine
+        // - only handling job-context specific exceptions, allows CancellationException to propagate up to top coroutine.
         if (false) {
             lifecycleScope.launch {
                 val job = launch {
@@ -340,8 +350,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Example 15 shows CORRECT way to handle exceptions in coroutines
-        // - OPTION 2: Catch all exceptions & manually re-throw CancellationException
+        // Example 15 shows CORRECT way to handle exceptions in coroutines.
+        // - OPTION 2: Catch all exceptions & manually re-throw CancellationException.
         if (false) {
 
             lifecycleScope.launch() {
@@ -370,8 +380,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Example 16 shows CORRECT way to handle exceptions in coroutines
-        // - OPTION 3: Using CoroutineExceptionHandler & custom Exception to handle CancellationException
+        // Example 16 shows CORRECT way to handle exceptions in coroutines.
+        // - OPTION 3: Using CoroutineExceptionHandler & custom Exception to handle CancellationException.
         if (false) {
 
             // Does *NOT* catch CancellationException, but will catch all other exceptions
