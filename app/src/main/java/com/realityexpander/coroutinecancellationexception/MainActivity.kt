@@ -498,12 +498,21 @@ class MainActivity : ComponentActivity() {
         // - NOTE: Once a child of coroutineScope fails, ALL CHILD COROUTINES ARE CANCELLED.
         // https://medium.com/mindful-engineering/exception-handling-in-kotlin-coroutines-fd08e622360e
         if(true) {
-            lifecycleScope.launch {
+            // Must be used with supervisorScope AND must be installed into the ROOT coroutine.
+            val handler = CoroutineExceptionHandler { _, throwable ->
+                println("CoroutineExceptionHandler Caught Exception: ${throwable.message}")
+            }
+
+//            lifecycleScope.launch() { // ok to not use handler for coroutineScope
+            lifecycleScope.launch(handler) { // must use handler for supervisorScope
                 try {
-                    coroutineScope {
+                    coroutineScope {  // without using coroutineScope, any exception of a child is changed to a CancellationException and caught in the catch block.
+
+//                    supervisorScope {     // When using supervisorScope, any exception of a child does not cancel the entire scope. (IE: other children are not cancelled.) (MUST USE handler)
                         launch {
-                            println("Coroutine 1 - starting simulated network call - Example 17...")
                             delay(200)
+                            println("Coroutine 1 - starting simulated network call - Example 17...")
+                            //throw HttpRetryException("Coroutine 1 - Simulated Network Error - from child inside coroutineScope", 404)
                             throw Exception("Coroutine 1 - Simulated Network Error - from child inside coroutineScope")
                         }
 
@@ -511,8 +520,10 @@ class MainActivity : ComponentActivity() {
                             println("Coroutine 2 - starting simulated processing work - Example 17...")
                         }
 
-                        delay(500L) // comment this to see the exception from the async child coroutine
+                        delay(500L)
+                        // When using supervisorScope, since this is not a child coroutine, it is caught in the try/catch block below (not the handler!)
                         val deferredResult1 = async(Dispatchers.IO) {
+                            println("Coroutine 3 - retrieving deferredResult1...")
                             throw IllegalStateException("Error thrown from async child inside coroutineScope")
 
                             "result from async child inside coroutineScope"
@@ -521,7 +532,10 @@ class MainActivity : ComponentActivity() {
                         println(deferredResult1.await())
                     }
                 } catch (e: Exception) {
-                    println("Handled in coroutineScope try/catch - Exception: ${e.message}")
+                    // if block is enclosed by coroutineScope, the exception from the child coroutine is used, otherwise it is a generic CancellationException
+                    println("Caught Exception: $e")
+
+                    println("Handled in coroutineScope try/catch - Exception: ${e.cause}, ${e.message}") // this always has the actual exception from the child coroutine
                 }
             }
         }
