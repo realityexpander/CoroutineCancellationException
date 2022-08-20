@@ -187,7 +187,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 println("About to print string...")
-                println("string: ${string.await()}") // this line completes the async coroutine & throws the exception.
+                println("string: ${string.await()}") // Completes the `string` async coroutine & throws the exception.
 
                 string
             }
@@ -196,7 +196,8 @@ class MainActivity : ComponentActivity() {
             // ** WRONG WAY TO HANDLE THIS - DON'T DO THIS **
             lifecycleScope.launch {
                 try {
-                    println("deferredString: ${deferredString.await()}")  // Completes the deferredString async block & catches exception and handles it.
+                    println("About to print deferredString...")
+                    println("deferredString: ${deferredString.await()}")  // Completes the `deferredString` async block & catches exception and handles it.
                 } catch (e: Exception) {
                     println("Second coroutine Caught Exception: ${e.message}")
                 }
