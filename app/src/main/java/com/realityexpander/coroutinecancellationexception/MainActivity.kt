@@ -492,7 +492,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Example 17 shows use of coroutineScope to re-throw exceptions of its children.
+        // Example 17 shows use of coroutineScope to re-throw exceptions of its children & supervisorScope to handle exceptions of its children.
         // `coroutineScope` catches & re-throws the failing exceptions of children INSTEAD of propagating them up to top coroutine.
         // - NOTE: `coroutineScope` is NOT a coroutine itself.
         // - NOTE: Once a child of coroutineScope fails, ALL CHILD COROUTINES ARE CANCELLED.
@@ -525,7 +525,7 @@ class MainActivity : ComponentActivity() {
                             println("Coroutine 3 - retrieving deferredResult1...")
                             throw IllegalStateException("Error thrown from async child inside coroutineScope")
 
-                            "result from async child inside coroutineScope"
+                            "result from async"
                         }
                         println("About to print deferredResult1...")
                         println(deferredResult1.await())
