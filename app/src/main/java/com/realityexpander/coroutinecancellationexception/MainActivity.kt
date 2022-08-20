@@ -503,17 +503,16 @@ class MainActivity : ComponentActivity() {
                 println("CoroutineExceptionHandler Caught Exception: ${throwable.message}")
             }
 
-//            lifecycleScope.launch() { // ok to not use handler for coroutineScope
-            lifecycleScope.launch(handler) { // must use handler for supervisorScope
+            lifecycleScope.launch() { // No need to use handler for coroutineScope, because the try/catch will handle the exceptions.
+//            lifecycleScope.launch(handler) { // *MUST* use handler for supervisorScope
                 try {
                     coroutineScope {  // without using coroutineScope, any exception of a child is changed to a CancellationException and caught in the catch block.
-
 //                    supervisorScope {     // When using supervisorScope, any exception of a child does not cancel the entire scope. (IE: other children are not cancelled.) (MUST USE handler)
+
                         launch {
                             delay(200)
                             println("Coroutine 1 - starting simulated network call - Example 17...")
-                            //throw HttpRetryException("Coroutine 1 - Simulated Network Error - from child inside coroutineScope", 404)
-                            throw Exception("Coroutine 1 - Simulated Network Error - from child inside coroutineScope")
+                            throw HttpRetryException("Coroutine 1 - Simulated Network Error - from child inside coroutineScope", 404)
                         }
 
                         launch {
@@ -533,9 +532,9 @@ class MainActivity : ComponentActivity() {
                     }
                 } catch (e: Exception) {
                     // if block is enclosed by coroutineScope, the exception from the child coroutine is used, otherwise it is a generic CancellationException
-                    println("Caught Exception: $e")
-
-                    println("Handled in coroutineScope try/catch - Exception: ${e.cause}, ${e.message}") // this always has the actual exception from the child coroutine
+                    println("Try/Catch handled Exception: $e")
+                    println("  e.cause: ${e.cause}")
+                    println("  e.message: ${e.message}") // this always has the actual exception from the child coroutine
                 }
             }
         }
