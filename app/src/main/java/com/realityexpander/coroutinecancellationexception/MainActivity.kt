@@ -249,9 +249,9 @@ class MainActivity : ComponentActivity() {
         // `string.await()` completes the async & exception is handled by handler.
         // Uses CoroutineExceptionHandler to handle exception. No crash.
         // ** RIGHT WAY TO HANDLE THIS - DO THIS **
-        if (true) {
+        if (false) {
             // Must install this in root coroutine scope
-            // (top-level <scope>.launch, adding to <scope>.async doesn't work)
+            // (top-level ie: <scope>.launch(handler).  Using <scope>.async(handler) doesn't work)
             val handler = CoroutineExceptionHandler { _, e ->
                 println("CoroutineExceptionHandler Caught Exception: ${e.message}")
             }
@@ -489,6 +489,40 @@ class MainActivity : ComponentActivity() {
                 delay(300L)
                 println("Coroutine 2 - Cancelling Coroutine 1 - Example 16 ")
                 job.cancel()  // throws cancellationException and caught in the "delay()" above (simulated network call)
+            }
+        }
+
+        // Example 17 shows use of coroutineScope to re-throw exceptions of its children.
+        // `coroutineScope` catches & re-throws the failing exceptions of children INSTEAD of propagating them up to top coroutine.
+        // - NOTE: `coroutineScope` is NOT a coroutine itself.
+        // - NOTE: Once a child of coroutineScope fails, ALL CHILD COROUTINES ARE CANCELLED.
+        // https://medium.com/mindful-engineering/exception-handling-in-kotlin-coroutines-fd08e622360e
+        if(true) {
+            lifecycleScope.launch {
+                try {
+                    coroutineScope {
+                        launch {
+                            println("Coroutine 1 - starting simulated network call - Example 17...")
+                            delay(200)
+                            throw Exception("Coroutine 1 - Simulated Network Error - from child inside coroutineScope")
+                        }
+
+                        launch {
+                            println("Coroutine 2 - starting simulated processing work - Example 17...")
+                        }
+
+                        delay(500L) // comment this to see the exception from the async child coroutine
+                        val deferredResult1 = async(Dispatchers.IO) {
+                            throw IllegalStateException("Error thrown from async child inside coroutineScope")
+
+                            "result from async child inside coroutineScope"
+                        }
+                        println("About to print deferredResult1...")
+                        println(deferredResult1.await())
+                    }
+                } catch (e: Exception) {
+                    println("Handled in coroutineScope try/catch - Exception: ${e.message}")
+                }
             }
         }
 
