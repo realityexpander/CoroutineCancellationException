@@ -36,7 +36,8 @@ class MainActivity : ComponentActivity() {
         }
 
         // Example 2 (1 inner coroutine)
-        // Exception is caught locally and not propagated, using a try/catch in local launch scope where exception occurs.
+        // Exception is caught locally and not propagated, using a try/catch in local launch
+        //   scope where exception occurs.
         if (false) {
             lifecycleScope.launch {
                 try {
@@ -44,7 +45,8 @@ class MainActivity : ComponentActivity() {
                         try {
                             throw Exception("Exception Example 2")
                         } catch (e: Exception) {
-                            // MUST be caught & handled here, or it will propagate to top level coroutine and crash
+                            // MUST be caught & handled in local launch scope, or exception
+                            //   will propagate to top level coroutine and crash
                             println("Caught inner Exception: ${e.message}")
                             e.printStackTrace()
                         }
@@ -64,7 +66,7 @@ class MainActivity : ComponentActivity() {
                     launch {
                         launch {
 
-                            // Exception is *NOT* handled & propagates up
+                            // Exception is *NOT* handled so propagates up
                             // & not handled & propagates up to top coroutine
                             // & CRASHES here
                             throw Exception("Exception Example 3")
@@ -80,7 +82,7 @@ class MainActivity : ComponentActivity() {
         // Exception propagates up to top level & crashes.
         // Even if the containing launch block has a try/catch, the exception STILL propagates
         //   up to the top level coroutine because it was not handled in the launch scope block that caused the exception.
-        if (true) {
+        if (false) {
             lifecycleScope.launch {
                 try {
                     launch {
@@ -105,23 +107,25 @@ class MainActivity : ComponentActivity() {
 
 
         // Example 4 inner async coroutine, outer launch.
-        // Crashes because the inner async coroutine throws unhandled exception and propagates up to the top and crashes.
+        // Crashes because the inner async coroutine throws unhandled exception and
+        //   propagates up to the top and crashes.
         if (false) {
             lifecycleScope.launch {
                 val string = async {
                     delay(500L)
 
-                    // propagates up to top coroutine and not handled, crashes here
+                    // propagates up to top coroutine and not handled, CRASHES here.
                     throw Exception("Exception Example 4")
 
                     "Result"
                 }
-                println("string: ${string.await()}")
+                println("string: ${string.await()}") // completes here and crashes above.
             }
         }
 
-        // Example 5 inner async coroutine, outer async, outer async never completes.
-        // No crash and inner async never completes because `deferredString.await()` is never called.
+        // Example 5 - inner async coroutine, outer async, outer async never completes.
+        // No crash.
+        // Inner async never completes because `deferredString.await()` is never called.
         if (false) {
             val deferredString = lifecycleScope.async {
                 val string = async {
@@ -138,19 +142,19 @@ class MainActivity : ComponentActivity() {
                 string
             }
 
-            // NOTICE: No `deferredString.await()` here. The async coroutine is not complete, so no crash occurs.
+            // NOTICE: No `deferredString.await()` here. The async coroutine never completes, so no crash occurs.
         }
 
         // Example 6 inner async coroutine, second coroutine completes the async with an await.
         // Exception is thrown in inner async coroutine.
-        // Second coroutine completes the Async & exception is NOT handled causing crash.
+        // Second coroutine completes the Async & exception is NOT handled causing CRASH.
         if (false) {
             val deferredString = lifecycleScope.async {
                 val string = async {
                     delay(500L)
 
                     // propagated up to top coroutine and not handled,
-                    // *will* crash here when async coroutine deferredString is .await()'ed.
+                    // *will* CRASH here when async coroutine deferredString is .await()'ed.
                     throw Exception("Exception Example 6")
 
                     "Result"
@@ -161,7 +165,7 @@ class MainActivity : ComponentActivity() {
             }
 
             // Get the deferredString here, which completes the deferredString async coroutine.
-            // This causes a crash due to unhandled exception.
+            // This causes a CRASH due to unhandled exception.
             lifecycleScope.launch {
                 println("deferredString: ${deferredString.await()}")  // causes crash
             }
@@ -169,9 +173,10 @@ class MainActivity : ComponentActivity() {
 
         // Example 7 inner async coroutine, with outer async. Exception is thrown in inner async coroutine,
         // Second coroutine completes the Async & exception is handled. No crash.
-        if (false) {
+        if (true) {
             val deferredString = lifecycleScope.async {
                 val string = async {
+                    println("About to get string...")
                     delay(500L)
 
                     // propagated up to top coroutine and not handled,
@@ -180,7 +185,9 @@ class MainActivity : ComponentActivity() {
 
                     "Result"
                 }
-                println("string: ${string.await()}")
+
+                println("About to print string...")
+                println("string: ${string.await()}") // this line completes the async coroutine & throws the exception.
 
                 string
             }
@@ -189,7 +196,7 @@ class MainActivity : ComponentActivity() {
             // ** WRONG WAY TO HANDLE THIS - DON'T DO THIS **
             lifecycleScope.launch {
                 try {
-                    println("deferredString: ${deferredString.await()}")  // catches exception and handles it
+                    println("deferredString: ${deferredString.await()}")  // Completes the deferredString async block & catches exception and handles it.
                 } catch (e: Exception) {
                     println("Second coroutine Caught Exception: ${e.message}")
                 }
