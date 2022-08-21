@@ -521,9 +521,11 @@ class MainActivity : ComponentActivity() {
 
                         launch {
                             println("Coroutine 2 - starting simulated processing work - Example 17...")
+                            delay(200)
+                            println("Coroutine 2 - finished simulated processing work - Example 17...")
                         }
 
-                        delay(500L)
+                        delay(500L) // comment out to see catch block for this coroutine
                         // When using supervisorScope, since this is not a child coroutine, it is caught in the try/catch block below (not the handler!)
                         val deferredResult1 = async(Dispatchers.IO) {
                             println("Coroutine 3 - retrieving deferredResult1...")
