@@ -19,7 +19,6 @@ import java.net.HttpRetryException
 // Reference this video: https://www.youtube.com/watch?v=VWlwkqmTLHc
 
 class MainActivity : ComponentActivity() {
-    @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
