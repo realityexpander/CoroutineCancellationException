@@ -558,6 +558,75 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////
+// Show delegation using by
+//////////////////////////////////////////////////////////////////////////////////////
+
+
+interface IHardwareMonitor {
+
+    fun observeBatteryChanges()
+
+    fun observeNetworkChanges()
+
+}
+class HardwareMonitorImpl : IHardwareMonitor {
+
+    override fun observeBatteryChanges() {
+        println("observeBatteryChanges()")
+    }
+
+    override fun observeNetworkChanges() {
+        print("observeNetworkChanges()")
+    }
+
+}
+// For user action tracking:
+
+interface ITrackingService {
+
+    fun trackUserAction(action: String)
+
+}
+class UserTrackingImpl : ITrackingService {
+
+    override fun trackUserAction(action: String) {
+        println("trackUserAction($action)")
+    }
+
+}
+
+// Now if our Activity uses both hardware monitor and tracking service we can implement the
+// IHardwareMonitor and ITrackingService class:
+
+class MainActivity2 : ComponentActivity(),
+    IHardwareMonitor by HardwareMonitorImpl(), // delegation
+    ITrackingService by UserTrackingImpl() // delegation
+{
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        observeBatteryChanges()
+        observeNetworkChanges()
+    }
+    override fun onPause() {
+        super.onPause()
+        trackUserAction("Activity paused")
+    }
+}
+
+// Or if our Activity uses only IHardwareMonitor class, we can just plug it into it:
+
+class LoginActivity : ComponentActivity(),
+    IHardwareMonitor by HardwareMonitorImpl() { // delegation
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        observeBatteryChanges()
+        observeNetworkChanges()
+    }
+}
+
 @Composable
 fun Greeting(name: String) {
     Text(text = "Hello $name!")
