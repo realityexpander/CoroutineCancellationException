@@ -507,8 +507,8 @@ class MainActivity : ComponentActivity() {
                 println("CoroutineExceptionHandler Caught Exception: ${throwable.message}")
             }
 
-            lifecycleScope.launch {            // No need to use handler for coroutineScope, because the try/catch will handle the exceptions.
-//            lifecycleScope.launch(handler) { // *MUST* use handler for supervisorScope
+            lifecycleScope.launch {            // Note: No need to use `handler` for coroutineScope, because the try/catch will handle the exceptions.
+//            lifecycleScope.launch(handler) { // Note: *MUST* use `handler` with supervisorScope
                 try {
                     coroutineScope {        // without using coroutineScope, any exception of a child is changed to a CancellationException and caught in the catch block.
 //                    supervisorScope {     // When using supervisorScope, any exception of a child does not cancel the entire scope. (IE: other children are not cancelled.) (MUST USE handler)
