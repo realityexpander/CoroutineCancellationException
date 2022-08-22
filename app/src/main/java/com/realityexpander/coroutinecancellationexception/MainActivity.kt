@@ -510,6 +510,7 @@ class MainActivity : ComponentActivity() {
         //   - Any exception (not caught locally) is CHANGED to a CancellationException, caught
         //     and AUTOMATICALLY re-thrown to top coroutine and CRASHES.
         //   - Catch block is ignored except for `CancellationException`.
+        //   - Catch block for CancellationException is run AND exception is RE-THROWN to top coroutine!
         //   - All coroutines are cancelled.
         //   - Crashes with the ORIGINAL exception, not the CancellationException! (UNEXPECTED BEHAVIOR)
 
