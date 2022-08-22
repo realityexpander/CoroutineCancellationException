@@ -577,9 +577,15 @@ class MainActivity : ComponentActivity() {
                     //   - Note: The child's original exception is stored in the `.cause` property
                     //     of the CancellationException.
 
-//                    coroutineScope {        // *** WHEN using `coroutineScope`, the exception from the child coroutine is not changed and caught as normal. (Expected behavior.)
+//                    coroutineScope {
+                        // *** WHEN using `coroutineScope`, an exception from a child coroutine
+                        //     is NOT changed and caught like normal try/catch. (Expected behavior.)
 
-                    supervisorScope {     // *** WHEN using `supervisorScope`, any exception of any child does not cancel the entire scope. (IE: other children are not cancelled.) (MUST USE `handler`)
+                    supervisorScope {
+                        // *** WHEN using `supervisorScope`, any exception of any child does NOT
+                        //   cancel the entire scope.
+                        //   (IE: other children are not cancelled and run to completion.)
+                        //   (NOTE: MUST USE `handler`)
 
                         launch {
                             delay(200)
@@ -641,7 +647,8 @@ class MainActivity : ComponentActivity() {
 //                    // EXAMPLE:
 //                    println("  RE-THROWING ORIGINAL EXCEPTION...")
 //                    throw e.cause ?: e  // attempt re-throw the ORIGINAL cause (if it exists),
-//                                        //   otherwise re-throw the CancellationException exception. (this does NOT change the original exception)
+//                                        //   otherwise re-throw the CancellationException exception.
+//                                        //   (this does NOT change the original exception)
 
 //                    // Attempting to re-throw a different exception DOES NOT CHANGE the behavior either:
 //                    println("  RE-THROWING CancellationException...")
@@ -649,11 +656,13 @@ class MainActivity : ComponentActivity() {
 //                    println("  THROWING IllegalStateException...")
 //                    throw IllegalStateException()  // attempt to throw a different exception - DOES NOTHING
 //                    throw e.initCause(IllegalStateException())  // attempt to throw an initialized exception - DOES NOTHING
+
                 } catch (e: HttpRetryException) {
                     // If try-block is enclosed with `coroutineScope`, this SPECIFIC exception is caught here and handled normally.
                     println("Catch handled HttpRetryException, e= $e")
                     println("  e.cause: ${e.cause}")
                     println("  e.message: ${e.message}")
+
                 } catch (e: Exception) {
                     // If try-block is enclosed by `coroutineScope`, the ORIGINAL exception from
                     //   the child coroutine is caught here. (Expected behavior.)
