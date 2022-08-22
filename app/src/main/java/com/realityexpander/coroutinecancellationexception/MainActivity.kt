@@ -513,6 +513,18 @@ class MainActivity : ComponentActivity() {
         //   - All coroutines are cancelled.
         //   - Crashes with the ORIGINAL exception, not the CancellationException! (UNEXPECTED BEHAVIOR)
 
+        // Scenario: NO CoroutineExceptionHandler, WITH coroutineScope
+        //   - Any exception (not caught locally) is caught by catch block normally, or propagated
+        //     to top coroutine and CRASHES.
+        //   - All other coroutines are cancelled.
+
+        // Scenario: NO CoroutineExceptionHandler, WITH supervisorScope
+        //   - Any exception (not caught locally) is propagated to top-level coroutine and CRASHES.
+        //   - All other coroutines are cancelled.
+        //   - NOTE: this is the worst scenario because `supervisorScope` does NOT catch exceptions
+        //     of its children.
+        //   - `supervisorScope` REQUIRES a CoroutineExceptionHandler to catch exceptions of its children.
+
         // Scenario: WITH CoroutineExceptionHandler, NO supervisorScope, NO coroutineScope
         //   - Any exception (not caught locally) is CHANGED to a CancellationException, caught
         //     and AUTOMATICALLY re-thrown to the top coroutine and caught by `handler`.
@@ -532,18 +544,6 @@ class MainActivity : ComponentActivity() {
         //     coroutine and caught by `handler`.
         //   - All other coroutines are cancelled.
         //   - NOTE: NO CRASH POSSIBLE.
-
-        // Scenario: NO CoroutineExceptionHandler, WITH coroutineScope
-        //   - Any exception (not caught locally) is caught by catch block normally, or propagated
-        //     to top coroutine and CRASHES.
-        //   - All other coroutines are cancelled.
-
-        // Scenario: NO CoroutineExceptionHandler, WITH supervisorScope
-        //   - Any exception (not caught locally) is propagated to top-level coroutine and CRASHES.
-        //   - All other coroutines are cancelled.
-        //   - NOTE: this is the worst scenario because `supervisorScope` does NOT catch exceptions
-        //     of its children.
-        //   - `supervisorScope` REQUIRES a CoroutineExceptionHandler to catch exceptions of its children.
 
         if(true) {
             // Must be used with supervisorScope AND must be installed into the ROOT coroutine.
