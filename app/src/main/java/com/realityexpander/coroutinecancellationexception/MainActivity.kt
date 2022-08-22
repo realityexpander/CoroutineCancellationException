@@ -596,8 +596,8 @@ class MainActivity : ComponentActivity() {
                         }
 
                         delay(500L) // (comment out to see catch block for this coroutine)
-                        // When using `supervisorScope`, since this is NOT A CHILD (its a sibling) coroutine,
-                        //   it is caught in the try/catch block below (not the `handler`!)
+                        // NOTE: When using `supervisorScope`, since this is NOT A CHILD (its a sibling) coroutine,
+                        //   the exception is caught in the try/catch block below (not the `handler`!)
                         val deferredResult1 = async(Dispatchers.IO) {
 
                             println("Coroutine 4 (Sibling) - starting simulated API - deferredResult1...")
