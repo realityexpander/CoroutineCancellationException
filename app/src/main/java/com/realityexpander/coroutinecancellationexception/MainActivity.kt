@@ -506,7 +506,7 @@ class MainActivity : ComponentActivity() {
         //
         //----------------------------------- SCENARIOS --------------------------------------------
         //
-        // Scenario: NO CoroutineExceptionHandler, NO supervisorScope, NO coroutineScope
+        // Scenario 1: NO CoroutineExceptionHandler, NO supervisorScope, NO coroutineScope
         //   - Any exception (not caught locally) is CHANGED to a CancellationException, caught
         //     and AUTOMATICALLY re-thrown to top coroutine and CRASHES.
         //   - Catch block is ignored except for `CancellationException`.
@@ -514,19 +514,19 @@ class MainActivity : ComponentActivity() {
         //   - All coroutines are cancelled.
         //   - Crashes with the ORIGINAL exception, not the CancellationException! (UNEXPECTED BEHAVIOR)
 
-        // Scenario: NO CoroutineExceptionHandler, WITH coroutineScope
+        // Scenario 2: NO CoroutineExceptionHandler, WITH coroutineScope
         //   - Any exception (not caught locally) is caught by catch block normally, or propagated
         //     to top coroutine and CRASHES.
         //   - All other coroutines are cancelled.
 
-        // Scenario: NO CoroutineExceptionHandler, WITH supervisorScope
+        // Scenario 3: NO CoroutineExceptionHandler, WITH supervisorScope
         //   - Any exception (not caught locally) is propagated to top-level coroutine and CRASHES.
         //   - All other coroutines are cancelled.
         //   - NOTE: this is the worst scenario because `supervisorScope` does NOT catch exceptions
         //     of its children.
         //   - `supervisorScope` REQUIRES a CoroutineExceptionHandler to catch exceptions of its children.
 
-        // Scenario: WITH CoroutineExceptionHandler, NO supervisorScope, NO coroutineScope
+        // Scenario 4: WITH CoroutineExceptionHandler, NO supervisorScope, NO coroutineScope
         //   - Any exception (not caught locally) is CHANGED to a CancellationException, caught
         //     and AUTOMATICALLY re-thrown to the top coroutine and caught by `handler`.
         //   - All coroutines are cancelled.
@@ -534,13 +534,13 @@ class MainActivity : ComponentActivity() {
         //     (not the CancellationException! UNEXPECTED BEHAVIOR)
         //   - NOTE: NO CRASH POSSIBLE.
 
-        // Scenario: WITH CoroutineExceptionHandler, WITH supervisorScope
+        // Scenario 5: WITH CoroutineExceptionHandler, WITH supervisorScope
         //   - Any exception (not caught locally) is caught by catch block, or propagated to top
         //     coroutine and caught by `handler`.
         //   - All other coroutines RUN TO COMPLETION (ie: no cancellation of children or siblings).
         //   - NOTE: NO CRASH POSSIBLE.
 
-        // Scenario: WITH CoroutineExceptionHandler, WITH coroutineScope
+        // Scenario 6: WITH CoroutineExceptionHandler, WITH coroutineScope
         //   - Any exception (not caught locally) is caught by catch block, or propagated to top
         //     coroutine and caught by `handler`.
         //   - All other coroutines are cancelled.
