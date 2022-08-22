@@ -503,7 +503,9 @@ class MainActivity : ComponentActivity() {
         // https://medium.com/mindful-engineering/exception-handling-in-kotlin-coroutines-fd08e622360e
         // https://kotlinlang.org/docs/exception-handling.html#exceptions-aggregation
         //
-        //----------------------------------------------------------------------------------------------
+        //
+        //----------------------------------- SCENARIOS --------------------------------------------
+        //
         // Scenario: NO CoroutineExceptionHandler, NO supervisorScope, NO coroutineScope
         //   - Any exception (not caught locally) is CHANGED to a CancellationException, caught
         //     and AUTOMATICALLY re-thrown to top coroutine and CRASHES.
@@ -539,7 +541,8 @@ class MainActivity : ComponentActivity() {
         // Scenario: NO CoroutineExceptionHandler, WITH supervisorScope
         //   - Any exception (not caught locally) is propagated to top-level coroutine and CRASHES.
         //   - All other coroutines are cancelled.
-        //   - NOTE: this is the worst scenario because `supervisorScope` does NOT catch exceptions of its children.
+        //   - NOTE: this is the worst scenario because `supervisorScope` does NOT catch exceptions
+        //     of its children.
         //   - `supervisorScope` REQUIRES a CoroutineExceptionHandler to catch exceptions of its children.
 
         if(true) {
@@ -548,21 +551,31 @@ class MainActivity : ComponentActivity() {
                 println("CoroutineExceptionHandler Caught Exception: $throwable")
                 println("   throwable.cause: ${throwable.cause}")
                 println("   throwable.message: ${throwable.message}")
-                println("   throwable.suppressed: ${throwable.suppressed.let{ if(it.isNotEmpty()) it.joinToString{ ", " } else "none"} }")
+                println("   throwable.suppressed: ${throwable.suppressed.let{ 
+                    if(it.isNotEmpty()) it.joinToString{ ", " } else "none"} }"
+                )
             }
 
             // *** top-level coroutine - NO CoroutineExceptionHandler
 //            lifecycleScope.launch {            // Note: No need to use a `handler` with `coroutineScope`, because the try/catch will handle the exceptions normally.
 
             // *** top-level coroutine WITH CoroutineExceptionHandler
-            lifecycleScope.launch(handler) { // Note: *MUST* use `handler` with `supervisorScope`, *OR* exceptions MUST be handled locally with try/catch inside the child coroutine.
-                                               // - If not using a `supervisorScope` or `coroutineScope`, any exception is CHANGED to a CancellationException and is propagated
-                                               //   to the top coroutine and the coroutine is cancelled.
-                                               //   - If the top coroutine does NOT have a `CoroutineExceptionHandler`, the program will crash!
+            lifecycleScope.launch(handler) {
+                // Note: *MUST* use `handler` with `supervisorScope`, *OR* exceptions MUST be
+                //   handled locally with try/catch INSIDE the child coroutine.
+                // - If not using a `supervisorScope` or `coroutineScope`, any exception is CHANGED
+                //   to a CancellationException and is propagated to the top coroutine and
+                //   the coroutine scope is cancelled.
+                // - If using a `supervisorScope`, and the top coroutine does NOT have a
+                //   `CoroutineExceptionHandler`, the program will CRASH!
+
                 try {
-                                            // WITHOUT using special enclosing scopes, any exception thrown by a child coroutine is CHANGED to a CancellationException! (UNEXPECTED BEHAVIOR)
-                                            //   - The CancellationException will be caught in the try/catch block AND is STILL propagated up to the top coroutine. If there is no `handler` there, it will crash.
-                                            //   - Note: The child's original exception is stored in the `.cause` property of the CancellationException.
+                    // WITHOUT using special enclosing scopes, any exception thrown by a child coroutine is CHANGED
+                    //   to a CancellationException! (UNEXPECTED BEHAVIOR)
+                    //   - The CancellationException will be caught in the try/catch block AND is
+                    //     STILL propagated up to the top coroutine. If there is no `handler` there, it will CRASH.
+                    //   - Note: The child's original exception is stored in the `.cause` property
+                    //     of the CancellationException.
 
 //                    coroutineScope {        // *** WHEN using `coroutineScope`, the exception from the child coroutine is not changed and caught as normal. (Expected behavior.)
 
@@ -597,7 +610,7 @@ class MainActivity : ComponentActivity() {
 
                         delay(500L) // (comment out to see catch block for this coroutine)
                         // NOTE: When using `supervisorScope`, since this is NOT A CHILD (its a sibling) coroutine,
-                        //   the exception is caught in the try/catch block below (not the `handler`!) (UNEXPECTED BEHAVIOR)
+                        //   the exception is caught in the try/catch block BELOW (not the `handler`!) (UNEXPECTED BEHAVIOR)
                         val deferredResult1 = async(Dispatchers.IO) {
 
                             println("Coroutine 4 (Sibling) - starting simulated API - deferredResult1...")
