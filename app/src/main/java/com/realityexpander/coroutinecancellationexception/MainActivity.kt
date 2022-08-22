@@ -535,8 +535,10 @@ class MainActivity : ComponentActivity() {
         //   - NOTE: NO CRASH POSSIBLE.
 
         // Scenario 5: WITH CoroutineExceptionHandler, WITH supervisorScope
-        //   - Any exception (not caught locally) is caught by catch block, or propagated to top
-        //     coroutine and caught by `handler`.
+        //   - Any exception (not caught locally) of child coroutines is caught is propagated to top
+        //     coroutine and caught by `handler`. (Not the catch block! UNEXPECTED BEHAVIOR)
+        //   - Sibling coroutine exceptions are handled by THE CATCH BLOCK, NOT THE `handler`!
+        //     (UNEXPECTED BEHAVIOR)
         //   - All other coroutines RUN TO COMPLETION (ie: no cancellation of children or siblings).
         //   - NOTE: NO CRASH POSSIBLE.
 
