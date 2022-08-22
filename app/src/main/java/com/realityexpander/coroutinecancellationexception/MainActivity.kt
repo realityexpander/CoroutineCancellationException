@@ -638,11 +638,12 @@ class MainActivity : ComponentActivity() {
 //                             ORIGINAL exception (from the child coroutine.) (UNEXPECTED BEHAVIOR)
 //                    // - Because of this, re-throwing the original exception is NOT RECOMMENDED,
 //                         as it gives no new information to the top-level coroutine.
+//                    // EXAMPLE:
 //                    println("  RE-THROWING ORIGINAL EXCEPTION...")
 //                    throw e.cause ?: e  // attempt re-throw the ORIGINAL cause (if it exists),
 //                                        //   otherwise re-throw the CancellationException exception. (this does NOT change the original exception)
 
-//                    // Attempting to re-throw a different exception does not change the behavior, either:
+//                    // Attempting to re-throw a different exception DOES NOT CHANGE the behavior either:
 //                    println("  RE-THROWING CancellationException...")
 //                    throw e  // attempt to re-throw the CancellationException - DOES NOTHING
 //                    println("  THROWING IllegalStateException...")
