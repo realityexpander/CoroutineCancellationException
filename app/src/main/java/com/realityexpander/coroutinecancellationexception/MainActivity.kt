@@ -667,7 +667,7 @@ class MainActivity : ComponentActivity() {
                     println("  e.message: ${e.message}")
 
                 } catch (e: Exception) {
-                    // If try-block is enclosed by `coroutineScope`, the ORIGINAL exception from
+                    // If try-block IS enclosed by `coroutineScope`, the ORIGINAL exception from
                     //   the child coroutine is caught here. (Expected behavior.)
                     //
                     // If NOT enclosed by `coroutineScope` the exception is a CHANGED to a
