@@ -580,11 +580,11 @@ class MainActivity : ComponentActivity() {
                     //   - Note: The child's original exception is stored in the `.cause` property
                     //     of the CancellationException.
 
-//                    coroutineScope {
+//                    coroutineScope {  // WITH coroutineScope
                         // *** WHEN using `coroutineScope`, an exception from a child coroutine
                         //     is NOT changed and caught like normal try/catch. (Expected behavior.)
 
-                    supervisorScope {
+                    supervisorScope {   // WITH supervisorScope
                         // *** WHEN using `supervisorScope`, any exception of any child does NOT
                         //   cancel the entire scope.
                         //   (IE: other children are not cancelled and run to completion.)
